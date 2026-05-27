@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOHAI LOAN GENERATOR</title>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e2937);
+      color: #fff;
+      min-height: 100vh;
+      padding: 15px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+
+    h1 { font-size: 28px; color: #facc15; text-align: center; margin-bottom: 5px; }
+    .subtitle { color: #94a3b8; text-align: center; margin-bottom: 20px; }
+
+    .card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 16px;
+    }
+
+    .row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .row input { flex: 1; }
+
+    .amount-list, .tenure-list {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+    }
+    .tag {
+      background: #334155;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag button {
+      background: none; border: none; color: #f87171; font-size: 18px; cursor: pointer;
+    }
+
+    /* 表格样式 - 完全模拟你的截图 */
+    #loanTable {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      color: #1e2937;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    th {
+      background: var(--header-color, #1e40af);
+      color: white;
+      padding: 16px 10px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    td {
+      padding: 14px 10px;
+      text-align: center;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 15px;
+    }
+    tr:nth-child(even) { background: #f8fafc; }
+    tr:hover { background: #f1f5f9; }
+    td:first-child { font-weight: 700; text-align: left; padding-left: 20px; }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 5px 0;
+    }
+    .btn-primary {
+      background: #facc15;
+      color: #1e2937;
+      width: 100%;
+    }
+    .export-btn {
+      background: #22c55e;
+      color: white;
+      font-size: 17px;
+      padding: 16px;
+      width: 100%;
+    }
+
+    .color-picker {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;
+    }
+    .color-option {
+      width: 45px; height: 45px; border-radius: 50%;
+      cursor: pointer; border: 3px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SOHAI LOAN GENERATOR</h1>
+    <p class="subtitle">Professional Fixed Rate Loan Chart</p>
+
+    <div class="card">
+      <label>Company Name</label>
+      <input type="text" id="company" value="AHLONG SDN. BHD.">
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Interest Rate (%)</label>
+          <input type="number" id="rate" step="0.01" value="3.85">
+        </div>
+        <div style="flex:1">
+          <label>Year (显示在图表)</label>
+          <input type="text" id="year" value="2026" placeholder="2026">
+        </div>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>Add Amount (RM)</label>
+          <input type="number" id="newAmount" value="3000">
+          <button onclick="addAmount()" class="btn-primary">+ Add</button>
+        </div>
+        <div style="flex:1">
+          <label>Add Tenure (Months)</label>
+          <input type="number" id="newTenure" value="12">
+          <button onclick="addTenure()" class="btn-primary">+ Add</button>
+        </div>
+      </div>
+
+      <label>Amounts</label>
+      <div class="amount-list" id="amountList"></div>
+
+      <label>Tenures (Months)</label>
+      <div class="tenure-list" id="tenureList"></div>
+
+      <label>Header Color</label>
+      <div class="color-picker" id="colorPicker"></div>
+    </div>
+
+    <div class="card">
+      <button onclick="generateTable()" class="btn-primary" style="font-size:18px; padding:16px;">Generate Chart</button>
+      <button onclick="exportAsImage()" class="export-btn">📸 Export as PNG (White Background)</button>
+    </div>
+
+    <div class="card" id="tableContainer" style="display:none; padding:25px; background:white; border-radius:16px;">
+      <h2 id="tableTitle" style="text-align:center; margin-bottom:20px; color:#1e2937; font-size:20px; font-weight:600;"></h2>
+      <table id="loanTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let amounts = [3000,5000,10000,20000,30000,40000,50000];
+    let tenures = [12,24,36,48,60,72,84,96];
+    let headerColor = '#1e40af';
+
+    const colors = ['#1e40af','#2563eb','#b91c1c','#166534','#854d0e','#7c3aed'];
+
+    function renderColorPicker() {
+      const picker = document.getElementById('colorPicker');
+      picker.innerHTML = '';
+      colors.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'color-option';
+        div.style.background = c;
+        div.onclick = () => { headerColor = c; generateTable(); };
+        picker.appendChild(div);
+      });
+    }
+
+    function renderLists() {
+      document.getElementById('amountList').innerHTML = amounts.map((amt,i) => 
+        `<div class="tag">${amt.toLocaleString()} <button onclick="removeAmount(${i})">×</button></div>`
+      ).join('');
+
+      document.getElementById('tenureList').innerHTML = tenures.map((t,i) => 
+        `<div class="tag">${t} <button onclick="removeTenure(${i})">×</button></div>`
+      ).join('');
+    }
+
+    function addAmount() {
+      const val = parseInt(document.getElementById('newAmount').value);
+      if (val && !amounts.includes(val)) {
+        amounts.push(val); amounts.sort((a,b)=>a-b);
+        renderLists();
+      }
+    }
+    function removeAmount(i) { amounts.splice(i,1); renderLists(); }
+
+    function addTenure() {
+      const val = parseInt(document.getElementById('newTenure').value);
+      if (val && !tenures.includes(val)) {
+        tenures.push(val); tenures.sort((a,b)=>a-b);
+        renderLists();
+      }
+    }
+    function removeTenure(i) { tenures.splice(i,1); renderLists(); }
+
+    function calculateMonthly(amount, rate, months) {
+      const years = months / 12;
+      const totalInterest = amount * (rate / 100) * years;
+      return Math.ceil((amount + totalInterest) / months);
+    }
+
+    function generateTable() {
+      const company = document.getElementById('company').value.trim();
+      const rate = parseFloat(document.getElementById('rate').value) || 3.85;
+      const year = document.getElementById('year').value.trim() || '2026';
+
+      document.getElementById('tableTitle').textContent = 
+        `${company} - ${rate}% Fixed Rate ${year}`;
+
+      const thead = document.getElementById('tableHead');
+      const tbody = document.getElementById('tableBody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      let header = `<tr><th>Amaun (RM)</th>`;
+      tenures.forEach(t => header += `<th>${t}</th>`);
+      header += `</tr>`;
+      thead.innerHTML = header;
+
+      amounts.forEach(amt => {
+        let row = `<tr><td>${amt.toLocaleString()}</td>`;
+        tenures.forEach(months => {
+          const pay = calculateMonthly(amt, rate, months);
+          row += `<td>${pay}</td>`;
+        });
+        row += `</tr>`;
+        tbody.innerHTML += row;
+      });
+
+      document.documentElement.style.setProperty('--header-color', headerColor);
+      document.getElementById('tableContainer').style.display = 'block';
+    }
+
+    async function exportAsImage() {
+      const container = document.getElementById('tableContainer');
+      if (!container) return;
+
+      const canvas = await html2canvas(container, {
+        scale: 2.8,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      const link = document.createElement('a');
+      link.download = `Loan_Chart_${new Date().toISOString().slice(0,10)}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // 初始化
+    renderColorPicker();
+    renderLists();
+    window.onload = generateTable;
+  </script>
+</body>
+</html>
